@@ -80,7 +80,15 @@ var Engine = (function(global) {
     }
 
     function checkCollisions() {
+      if (player.y === 0) {
+        player.reset();
+      }
 
+      allEnemies.forEach(function(enemy) {
+        if (player.collides(enemy)) {
+          player.reset();
+        }
+      });
     }
 
     /* This function initially draws the "game level", it will then call

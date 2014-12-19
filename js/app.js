@@ -52,6 +52,12 @@ Player.prototype.update = function() {
 
 };
 
+Player.prototype.collides = function(enemy) {
+  return this.y === enemy.y &&
+    (enemy.x + TILE_WIDTH / 2) >= this.x &&
+    (enemy.x + TILE_WIDTH / 2) <= (this.x + TILE_WIDTH);
+};
+
 Player.prototype.render = function() {
   var verticalOffset = -23;
   ctx.drawImage(Resources.get(this.sprite), 
