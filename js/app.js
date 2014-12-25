@@ -3,21 +3,36 @@ window.TILE_HEIGHT = 83;
 window.NUM_ROWS = 6;
 window.NUM_COLS = 5;
 
-var Character = function(x, y, sprite) {
+var Entity = function(x, y, sprite, verticalOffset) {
   this.x = x;
   this.y = y;
   this.sprite = sprite;
+  this.verticalOffset = verticalOffset;
+};
+
+Entity.prototype.reset = function() {};
+
+Entity.prototype.update = function(dt) {};
+
+Entity.prototype.render = function() {
+  ctx.drawImage(Resources.get(this.sprite), this.x, this.y + this.verticalOffset);
 };
 
 
 // Enemies our player must avoid
 var Enemy = function() {
-  Character.call(this, 0, 0, 'images/enemy-bug.png');
+  Entity.call(this, 0, 0, 'images/enemy-bug.png', -23);
   this.reset();
 };
 
-Enemy.prototype = Object.create(Character.prototype);
+Enemy.prototype = Object.create(Entity.prototype);
 Enemy.prototype.constructor = Enemy;
+
+Enemy.prototype.reset = function() {
+  this.x = -TILE_WIDTH;
+  this.y = (Math.floor(Math.random() * 3) + 1) * TILE_HEIGHT;
+  this.speed = (Math.floor(Math.random() * 5) + 1) * 100;
+};
 
 Enemy.prototype.update = function(dt) {
   this.x += this.speed * dt;
@@ -26,42 +41,25 @@ Enemy.prototype.update = function(dt) {
   }
 };
 
-Enemy.prototype.render = function() {
-  var verticalOffset = -23;
-  ctx.drawImage(Resources.get(this.sprite), this.x, this.y + verticalOffset);
-};
-
-Enemy.prototype.reset = function() {
-  this.x = -TILE_WIDTH;
-  this.y = (Math.floor(Math.random() * 3) + 1) * TILE_HEIGHT;
-  this.speed = (Math.floor(Math.random() * 5) + 1) * 100;
-};
-
 
 // Our Player class
 var Player = function(x, y) {
-  Character.call(this, 0, 0);
-  this.sprite = 'images/char-boy.png';
+  Entity.call(this, 0, 0, 'images/char-boy.png', -23);
   this.reset();
 };
 
-Player.prototype = Object.create(Character.prototype);
+Player.prototype = Object.create(Entity.prototype);
 Player.prototype.constructor = Player;
 
-Player.prototype.update = function() {
-
+Player.prototype.reset = function() {
+  this.x = TILE_WIDTH * 2;
+  this.y = TILE_HEIGHT * 5;
 };
 
 Player.prototype.collides = function(enemy) {
   return this.y === enemy.y &&
     (enemy.x + TILE_WIDTH / 2) >= this.x &&
     (enemy.x + TILE_WIDTH / 2) <= (this.x + TILE_WIDTH);
-};
-
-Player.prototype.render = function() {
-  var verticalOffset = -23;
-  ctx.drawImage(Resources.get(this.sprite), 
-    this.x, this.y + verticalOffset);
 };
 
 Player.prototype.handleInput = function(dir) {
@@ -79,19 +77,35 @@ Player.prototype.handleInput = function(dir) {
   }
 };
 
-Player.prototype.reset = function() {
-  this.x = TILE_WIDTH * 2;
-  this.y = TILE_HEIGHT * 5;
+
+
+var Gem = function(x, y, color) {
+  var sprite = 'images/Gem Blue.png';
+  switch (color) {
+    case 'green':
+      sprite = 'images/Gem Green.png';
+    break;
+    case 'orange':
+      sprite = 'images/Gem Orange.png';
+    break;
+    case 'blue':
+      sprite = 'images/Gem Blue.png';
+    break;
+  }
+  Entity.call(this, x, y, sprite, -36)
 };
 
-var numEnemies = 3;
+Gem.prototype = Object.create(Entity.prototype);
+Gem.prototype.constructor = Gem;
+
+
 window.allEnemies = [];
+var numEnemies = 5;
 for (var i = 0; i < numEnemies; i++) {
   window.allEnemies.push(new Enemy());
 }
-
-
 window.player = new Player();
+
 
 document.addEventListener('keyup', function(e) {
   var allowedKeys = {

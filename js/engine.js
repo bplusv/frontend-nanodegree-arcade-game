@@ -19,7 +19,17 @@ var Engine = (function(global) {
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
-        lastTime;
+        lastTime,
+        allGems = [],
+        gameState = 'welcome',
+        background = [
+          ['w','w','w','w','g'],
+          ['s','s','s','s','s'],
+          ['s','w','w','w','s'],
+          ['s','w','s','s','s'],
+          ['w','g','g','g','g'],
+          ['g','g','g','g','g']
+        ];
         
 
 
@@ -46,7 +56,7 @@ var Engine = (function(global) {
      * game loop.
      */
     function init() {
-        reset();
+        reset('welcome');
         lastTime = Date.now();
         main();
     }
@@ -61,8 +71,12 @@ var Engine = (function(global) {
      * on the entities themselves within your app.js file).
      */
     function update(dt) {
-        updateEntities(dt);
-        checkCollisions();
+      switch(gameState) {
+        case 'level':
+          updateEntities(dt);
+          checkCollisions();
+        break;
+      }
     }
 
     /* This is called by the update function  and loops through all of the
@@ -76,17 +90,27 @@ var Engine = (function(global) {
         allEnemies.forEach(function(enemy) {
             enemy.update(dt);
         });
-        player.update();
     }
 
     function checkCollisions() {
-      if (player.y === 0) {
-        player.reset();
+      if (mapPositionToBackground(player.x, player.y) === 'w') {
+        reset('level');
+        return;
       }
 
       allEnemies.forEach(function(enemy) {
         if (player.collides(enemy)) {
-          player.reset();
+          reset('level');
+          return;
+        }
+      });
+      allGems.forEach(function(gem){
+        if (player.collides(gem)) {
+          allGems.splice(allGems.indexOf(gem), 1);
+          if (allGems.length === 0) {
+            reset('win');
+            return;
+          }
         }
       });
     }
@@ -98,27 +122,47 @@ var Engine = (function(global) {
      * they are just drawing the entire screen over and over.
      */
     function render() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
 
-        var rowImages = [
-                'images/water-block.png',
-                'images/stone-block.png',
-                'images/stone-block.png',
-                'images/stone-block.png',
-                'images/grass-block.png',
-                'images/grass-block.png'
-            ],
-            row, col;
+      switch(gameState) {
+        case 'welcome':
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          var textPos = { x: canvas.width / 2, y: canvas.height / 2 };
+          drawText('Get all 3 gems!', textPos.x, textPos.y);
+          drawText('(press enter)', textPos.x, textPos.y + 72);
+        break;
 
-        for (row = 0; row < win.NUM_ROWS; row++) {
-            for (col = 0; col < win.NUM_COLS; col++) {
-                ctx.drawImage(Resources.get(rowImages[row]), 
-                  col * win.TILE_WIDTH, row * win.TILE_HEIGHT );
+        case 'level':
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          var row, col;
+          for (var row = 0; row < background.length; row++) {
+            for (var col = 0; col < background[row].length; col++) {
+              var sprite;
+              switch (background[row][col]) {
+                case 'g':
+                  sprite = 'images/grass-block.png';
+                break;
+                case 's':
+                  sprite = 'images/stone-block.png';
+                break;
+                case 'w':
+                  sprite = 'images/water-block.png';
+                break;
+              }
+              ctx.drawImage(Resources.get(sprite), 
+                col * win.TILE_WIDTH, row * win.TILE_HEIGHT );
             }
-        }
+          }
+          renderEntities();
+        break;
 
-
-        renderEntities();
+        case 'win':
+          var textPos = { x: canvas.width / 2, y: canvas.height / 2 };
+          drawText('You win! Try again?', textPos.x, textPos.y);
+          drawText('(press enter)', textPos.x, textPos.y + 72);
+        break;
+      }
     }
 
     /* This function is called by the render function and is called on each game
@@ -126,10 +170,12 @@ var Engine = (function(global) {
      * on your enemy and player entities within app.js
      */
     function renderEntities() {
+        allGems.forEach(function(gem) {
+            gem.render();
+        });
         allEnemies.forEach(function(enemy) {
             enemy.render();
         });
-
         player.render();
     }
 
@@ -137,16 +183,62 @@ var Engine = (function(global) {
      * handle game reset states - maybe a new game menu or a game over screen
      * those sorts of things. It's only called once by the init() method.
      */
-    function reset() {
-      
+    function reset(scene) {
+      switch (scene) {
+        case 'welcome':
+          gameState = 'welcome';
+        break;
+        case 'level':
+          gameState = 'level';
+          allGems.splice(0);
+          allGems.push(new Gem(TILE_WIDTH * 4, TILE_HEIGHT * 0, 'blue'));
+          allGems.push(new Gem(TILE_WIDTH * 0, TILE_HEIGHT * 3, 'green'));
+          allGems.push(new Gem(TILE_WIDTH * 0, TILE_HEIGHT * 1, 'orange'));
+          player.reset();
+        break;
+        case 'win':
+        gameState = 'win';
+        break;
+      }
     }
+
+    function mapPositionToBackground(x, y) {
+      return background[y / TILE_HEIGHT][x / TILE_WIDTH];
+    }
+
+    function drawText(text, x, y) {
+        ctx.font = '40px Impact';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000';
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = 'center';
+        ctx.fillText(text, x, y);
+        ctx.strokeText(text, x, y);
+    }
+
+    doc.addEventListener('keyup', function(e) {
+        if (e.keyCode === 13) {
+          switch (gameState) {
+            case 'welcome':
+              reset('level');
+            break;
+            case 'win':
+              reset('welcome');
+            break;
+          }
+        }
+      });
 
     Resources.load([
         'images/stone-block.png',
         'images/water-block.png',
         'images/grass-block.png',
         'images/enemy-bug.png',
-        'images/char-boy.png'
+        'images/char-boy.png',
+        'images/Gem Blue.png',
+        'images/Gem Green.png',
+        'images/Gem Orange.png',
+        'images/Rock.png',
     ]);
     Resources.onReady(init);
 

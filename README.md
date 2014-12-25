@@ -1,6 +1,13 @@
 frontend-nanodegree-arcade-game
 ===============================
 
-Students should use this rubric: https://www.udacity.com/course/viewer#!/c-ud015/l-3072058665/m-3072588797
+Please open the file "index.html" using a your favorite internet browser,
+like Google Chrome, Firefox, Safari or Internet Explorer.
 
-for self-checking their submission.
+Requirements:
+A browser supporting HTML5 Canvas is required.
+
+
+You can move the player using the keyboard "arrows" keys.
+
+Have Fun.
