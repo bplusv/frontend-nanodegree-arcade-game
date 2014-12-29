@@ -10,6 +10,6 @@ Internet explorer must be version 9 or higher.
 
 To start the game press the "enter" key.
 You can move the player using the keyboard "arrows" keys.
-You most collect all the 3 gems, avoiding the enemies or the water.
+You must collect all the 3 gems, avoiding the enemies or the water.
 
 Have Fun.
